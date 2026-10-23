@@ -1,0 +1,382 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Authorized user profile and preferences",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "email": { "type": "string", "maxLength": 254 },
+        "displayName": { "type": "string", "maxLength": 120 },
+        "role": { "type": "string", "enum": ["owner", "admin", "member"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "displayName", "role", "createdAt", "updatedAt"]
+    },
+    "InvoiceTracking": {
+      "title": "InvoiceTracking",
+      "description": "DesiDiya Master Shipment and Invoice Tracking record",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "invoice_no": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "po_number": { "type": "string", "maxLength": 64 },
+        "vendor_name": { "type": "string", "maxLength": 160 },
+        "location": { "type": "string", "maxLength": 160 },
+        "dispatched_date": { "type": "string", "maxLength": 32 },
+        "appointment_date": { "type": "string", "maxLength": 32 },
+        "po_expiry_date": { "type": "string", "maxLength": 32 },
+        "invoice_quantity": { "type": "number" },
+        "grn_quantity": { "type": "number" },
+        "dn_quantity": { "type": "number" },
+        "no_of_box": { "type": "number" },
+        "invoice_amount": { "type": "number" },
+        "grn_amount": { "type": "number" },
+        "dn_amount": { "type": "number" },
+        "po_type": { "type": "string", "maxLength": 64 },
+        "tracking_id": { "type": "string", "maxLength": 80 },
+        "shipment_track_id": { "type": "string", "maxLength": 80 },
+        "transport_mode": { "type": "string", "maxLength": 80 },
+        "appointment_count": { "type": "number" },
+        "appointment_history": { "type": "string", "maxLength": 3000 },
+        "delivery_status": { "type": "string", "maxLength": 40 },
+        "invoice_status": { "type": "string", "maxLength": 40 },
+        "dn_status": { "type": "string", "maxLength": 40 },
+        "dn_resolution": { "type": "string", "maxLength": 80 },
+        "dn_closure_date": { "type": "string", "maxLength": 32 },
+        "delivery_remark": { "type": "string", "maxLength": 2000 },
+        "invoice_remark": { "type": "string", "maxLength": 2000 },
+        "general_remark": { "type": "string", "maxLength": 3000 },
+        "assigned_person": { "type": "string", "maxLength": 120 },
+        "grn_no": { "type": "string", "maxLength": 64 },
+        "original_appointment_date": { "type": "string", "maxLength": 32 },
+        "original_po_expiry_date": { "type": "string", "maxLength": 32 },
+        "po_expiry_history": { "type": "string", "maxLength": 3000 },
+        "cn_no": { "type": "string", "maxLength": 64 },
+        "cn_amount": { "type": "number" },
+        "cn_status": { "type": "string", "maxLength": 40 },
+        "invoice_file_path": { "type": "string", "maxLength": 500 },
+        "po_file_path": { "type": "string", "maxLength": 500 },
+        "pod_file_path": { "type": "string", "maxLength": 500 },
+        "grn_file_path": { "type": "string", "maxLength": 500 },
+        "dn_file_path": { "type": "string", "maxLength": 500 },
+        "cn_file_path": { "type": "string", "maxLength": 500 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "invoice_no", "createdAt", "updatedAt"]
+    },
+    "TrackingDocument": {
+      "title": "TrackingDocument",
+      "description": "Metadata for uploaded business documents (Invoice, PO, POD, GRN, DN, CN)",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "category": { "type": "string", "enum": ["Invoice", "PO", "POD", "GRN", "DN", "CN"] },
+        "originalFilename": { "type": "string", "minLength": 1, "maxLength": 255 },
+        "invoiceNo": { "type": "string", "maxLength": 64 },
+        "poNumber": { "type": "string", "maxLength": 64 },
+        "trackingId": { "type": "string", "maxLength": 80 },
+        "uploadTimestamp": { "type": "string", "maxLength": 40 },
+        "uploadedByEmail": { "type": "string", "maxLength": 254 },
+        "storagePath": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "mimeType": { "type": "string", "maxLength": 120 },
+        "sizeBytes": { "type": "number" },
+        "historyJson": { "type": "string", "maxLength": 4000 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "category", "originalFilename", "storagePath", "uploadTimestamp", "uploadedByEmail", "sizeBytes", "createdAt", "updatedAt"]
+    },
+    "Task": {
+      "title": "Task",
+      "description": "Spreadsheet-like productivity and operations task",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "taskCode": { "type": "string", "maxLength": 32 },
+        "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "description": { "type": "string", "maxLength": 2000 },
+        "category": { "type": "string", "enum": ["Office Work", "Operations", "Data Analytics", "Coding", "Video Creation", "Stock Market Research", "Personal", "Other"] },
+        "priority": { "type": "string", "enum": ["Critical", "High", "Medium", "Low"] },
+        "status": { "type": "string", "enum": ["Not Started", "In Progress", "Waiting", "Blocked", "Completed", "Cancelled"] },
+        "createdDate": { "type": "string", "maxLength": 32 },
+        "startDate": { "type": "string", "maxLength": 32 },
+        "dueDate": { "type": "string", "maxLength": 32 },
+        "completedDate": { "type": "string", "maxLength": 32 },
+        "assignedBy": { "type": "string", "maxLength": 120 },
+        "assignedTo": { "type": "string", "maxLength": 120 },
+        "estimatedHours": { "type": "number" },
+        "actualHours": { "type": "number" },
+        "tags": { "type": "array", "maxLength": 10 },
+        "notes": { "type": "string", "maxLength": 2000 },
+        "subtasksJson": { "type": "string", "maxLength": 4000 },
+        "commentsJson": { "type": "string", "maxLength": 4000 },
+        "projectId": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "taskCode", "title", "category", "priority", "status", "createdDate", "dueDate", "estimatedHours", "actualHours", "createdAt", "updatedAt"]
+    },
+    "OperationRecord": {
+      "title": "OperationRecord",
+      "description": "Courier shipment, warehouse appointment, and PO delivery tracker record",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "recordCode": { "type": "string", "maxLength": 32 },
+        "poNumber": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "invoiceNumber": { "type": "string", "maxLength": 64 },
+        "lrNumber": { "type": "string", "maxLength": 64 },
+        "courierName": { "type": "string", "maxLength": 120 },
+        "vehicleNumber": { "type": "string", "maxLength": 40 },
+        "driverName": { "type": "string", "maxLength": 100 },
+        "driverContact": { "type": "string", "maxLength": 40 },
+        "sku": { "type": "string", "maxLength": 80 },
+        "productName": { "type": "string", "maxLength": 200 },
+        "quantity": { "type": "number" },
+        "warehouse": { "type": "string", "maxLength": 120 },
+        "dispatchDate": { "type": "string", "maxLength": 32 },
+        "reportingDate": { "type": "string", "maxLength": 32 },
+        "appointmentDate": { "type": "string", "maxLength": 32 },
+        "poCreationDate": { "type": "string", "maxLength": 32 },
+        "poExpiryDate": { "type": "string", "maxLength": 32 },
+        "deliveryDate": { "type": "string", "maxLength": 32 },
+        "shipmentStatus": { "type": "string", "enum": ["Planned", "Dispatched", "In Transit", "At Last-Mile Hub", "Appointment Pending", "Appointment Scheduled", "Vehicle Reported", "Unloaded", "Delivered", "Partially Delivered", "On Hold", "Returned", "Expired", "Cancelled"] },
+        "appointmentStatus": { "type": "string", "maxLength": 60 },
+        "issueCategory": { "type": "string", "maxLength": 80 },
+        "issueDescription": { "type": "string", "maxLength": 1000 },
+        "nextFollowUpDate": { "type": "string", "maxLength": 32 },
+        "lastUpdatedDate": { "type": "string", "maxLength": 32 },
+        "remarks": { "type": "string", "maxLength": 2000 },
+        "rescheduleHistoryJson": { "type": "string", "maxLength": 5000 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "recordCode", "poNumber", "courierName", "warehouse", "quantity", "shipmentStatus", "poExpiryDate", "createdAt", "updatedAt"]
+    },
+    "PurchaseOrder": {
+      "title": "PurchaseOrder",
+      "description": "Purchase order lifecycle, appointment history, and expiry extension tracking",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "poNumber": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "vendor": { "type": "string", "maxLength": 120 },
+        "courier": { "type": "string", "maxLength": 120 },
+        "warehouse": { "type": "string", "maxLength": 120 },
+        "poCreationDate": { "type": "string", "maxLength": 32 },
+        "originalAppointmentDate": { "type": "string", "maxLength": 32 },
+        "currentAppointmentDate": { "type": "string", "maxLength": 32 },
+        "originalExpiryDate": { "type": "string", "maxLength": 32 },
+        "currentExpiryDate": { "type": "string", "maxLength": 32 },
+        "poStatus": { "type": "string", "enum": ["Open", "Appointment Scheduled", "In Transit", "Partially Received", "GRN Completed", "Expired", "Cancelled"] },
+        "expectedQuantity": { "type": "number" },
+        "receivedQuantity": { "type": "number" },
+        "pendingQuantity": { "type": "number" },
+        "relatedInvoices": { "type": "string", "maxLength": 500 },
+        "relatedLRs": { "type": "string", "maxLength": 500 },
+        "notes": { "type": "string", "maxLength": 2000 },
+        "changeHistoryJson": { "type": "string", "maxLength": 5000 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "poNumber", "vendor", "warehouse", "currentExpiryDate", "poStatus", "expectedQuantity", "receivedQuantity", "pendingQuantity", "createdAt", "updatedAt"]
+    },
+    "Escalation": {
+      "title": "Escalation",
+      "description": "GRN, DN, RTV and courier escalation tracking",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "escalationCode": { "type": "string", "maxLength": 32 },
+        "relatedPoNumber": { "type": "string", "maxLength": 64 },
+        "relatedLrNumber": { "type": "string", "maxLength": 64 },
+        "courierName": { "type": "string", "maxLength": 120 },
+        "warehouse": { "type": "string", "maxLength": 120 },
+        "escalationType": { "type": "string", "enum": ["GRN Pending", "DN Issue", "RTV Pickup", "Shipment Rejection", "Capacity Issue", "Appointment Issue", "PO Expiry", "Invoice Issue", "Courier Delay", "Other"] },
+        "issueDescription": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "responsibleTeam": { "type": "string", "maxLength": 120 },
+        "assignedPerson": { "type": "string", "maxLength": 120 },
+        "createdDate": { "type": "string", "maxLength": 32 },
+        "priority": { "type": "string", "enum": ["Critical", "High", "Medium", "Low"] },
+        "status": { "type": "string", "enum": ["Open", "In Progress", "Awaiting Warehouse", "Awaiting Vendor", "Resolved", "Closed", "Reopened"] },
+        "lastFollowUpDate": { "type": "string", "maxLength": 32 },
+        "nextFollowUpDate": { "type": "string", "maxLength": 32 },
+        "resolutionNotes": { "type": "string", "maxLength": 2000 },
+        "closureDate": { "type": "string", "maxLength": 32 },
+        "historyJson": { "type": "string", "maxLength": 5000 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "escalationCode", "escalationType", "issueDescription", "createdDate", "priority", "status", "createdAt", "updatedAt"]
+    },
+    "SeniorAssignment": {
+      "title": "SeniorAssignment",
+      "description": "Direct assignments from senior management",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "assignmentCode": { "type": "string", "maxLength": 32 },
+        "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "assignedBy": { "type": "string", "maxLength": 120 },
+        "assignedDate": { "type": "string", "maxLength": 32 },
+        "dueDate": { "type": "string", "maxLength": 32 },
+        "priority": { "type": "string", "enum": ["Critical", "High", "Medium", "Low"] },
+        "description": { "type": "string", "maxLength": 2000 },
+        "status": { "type": "string", "enum": ["Pending", "In Progress", "In Review", "Completed", "On Hold"] },
+        "progress": { "type": "number" },
+        "comments": { "type": "string", "maxLength": 2000 },
+        "completionDate": { "type": "string", "maxLength": 32 },
+        "linkedTaskId": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "assignmentCode", "title", "assignedBy", "assignedDate", "dueDate", "priority", "status", "progress", "createdAt", "updatedAt"]
+    },
+    "Project": {
+      "title": "Project",
+      "description": "Multi-milestone personal and professional projects",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "projectCode": { "type": "string", "maxLength": 32 },
+        "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "description": { "type": "string", "maxLength": 2000 },
+        "category": { "type": "string", "enum": ["Coding Projects", "Data Analytics", "Video Creation", "Content Creation", "Stock Market Research", "Personal Goals", "Other Projects"] },
+        "startDate": { "type": "string", "maxLength": 32 },
+        "targetDate": { "type": "string", "maxLength": 32 },
+        "status": { "type": "string", "enum": ["Planning", "Active", "On Hold", "Completed", "Archived"] },
+        "priority": { "type": "string", "enum": ["Critical", "High", "Medium", "Low"] },
+        "progress": { "type": "number" },
+        "milestonesJson": { "type": "string", "maxLength": 4000 },
+        "notes": { "type": "string", "maxLength": 2000 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "projectCode", "name", "category", "startDate", "targetDate", "status", "priority", "progress", "createdAt", "updatedAt"]
+    },
+    "TimeLog": {
+      "title": "TimeLog",
+      "description": "Time tracking entry linked to tasks and projects",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "taskId": { "type": "string", "maxLength": 128 },
+        "taskTitle": { "type": "string", "maxLength": 200 },
+        "projectId": { "type": "string", "maxLength": 128 },
+        "projectName": { "type": "string", "maxLength": 200 },
+        "startTime": { "type": "string", "maxLength": 40 },
+        "endTime": { "type": "string", "maxLength": 40 },
+        "durationMinutes": { "type": "number" },
+        "notes": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "startTime", "endTime", "durationMinutes", "createdAt", "updatedAt"]
+    },
+    "ActivityLog": {
+      "title": "ActivityLog",
+      "description": "Immutable audit trail entry for critical record mutations",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "recordType": { "type": "string", "maxLength": 64 },
+        "recordId": { "type": "string", "maxLength": 128 },
+        "action": { "type": "string", "maxLength": 120 },
+        "previousValue": { "type": "string", "maxLength": 1000 },
+        "newValue": { "type": "string", "maxLength": 1000 },
+        "userEmail": { "type": "string", "maxLength": 254 },
+        "timestampIso": { "type": "string", "maxLength": 40 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "recordType", "recordId", "action", "timestampIso", "createdAt"]
+    },
+    "ImportJob": {
+      "title": "ImportJob",
+      "description": "CSV and Excel import job audit summary",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "fileName": { "type": "string", "maxLength": 200 },
+        "targetModule": { "type": "string", "enum": ["tasks", "operations", "purchaseOrders", "escalations", "invoiceTracking"] },
+        "totalRows": { "type": "number" },
+        "importedRows": { "type": "number" },
+        "invalidRows": { "type": "number" },
+        "duplicateRows": { "type": "number" },
+        "timestampIso": { "type": "string", "maxLength": 40 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "fileName", "targetModule", "totalRows", "importedRows", "invalidRows", "duplicateRows", "timestampIso", "createdAt"]
+    },
+    "NotificationPreference": {
+      "title": "NotificationPreference",
+      "description": "User workspace, allowlist, and in-app reminder preferences",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "allowedEmails": { "type": "array", "maxLength": 20 },
+        "poExpiryWarnDays": { "type": "number" },
+        "taskDueReminderHours": { "type": "number" },
+        "theme": { "type": "string", "enum": ["light", "dark"] },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ownerId", "allowedEmails", "poExpiryWarnDays", "taskDueReminderHours", "theme", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Private user account records"
+    },
+    "/invoiceTracking/{recordId}": {
+      "schema": { "$ref": "#/entities/InvoiceTracking" },
+      "description": "DesiDiya Master Shipment and Invoice Tracking records"
+    },
+    "/trackingDocuments/{docId}": {
+      "schema": { "$ref": "#/entities/TrackingDocument" },
+      "description": "Document metadata and storage references for Invoice, PO, POD, GRN, DN, CN"
+    },
+    "/tasks/{taskId}": {
+      "schema": { "$ref": "#/entities/Task" },
+      "description": "User-owned productivity and operations tasks"
+    },
+    "/operations/{operationId}": {
+      "schema": { "$ref": "#/entities/OperationRecord" },
+      "description": "Courier shipment, warehouse appointment, and PO delivery tracker"
+    },
+    "/purchaseOrders/{poId}": {
+      "schema": { "$ref": "#/entities/PurchaseOrder" },
+      "description": "Purchase order records with appointment and expiry audit history"
+    },
+    "/escalations/{escalationId}": {
+      "schema": { "$ref": "#/entities/Escalation" },
+      "description": "GRN, DN, RTV and shipment escalations"
+    },
+    "/assignments/{assignmentId}": {
+      "schema": { "$ref": "#/entities/SeniorAssignment" },
+      "description": "Senior management assignments"
+    },
+    "/projects/{projectId}": {
+      "schema": { "$ref": "#/entities/Project" },
+      "description": "Personal and professional project portfolio"
+    },
+    "/timeLogs/{timeLogId}": {
+      "schema": { "$ref": "#/entities/TimeLog" },
+      "description": "Time tracking logs"
+    },
+    "/activityLogs/{activityLogId}": {
+      "schema": { "$ref": "#/entities/ActivityLog" },
+      "description": "Immutable activity and change history logs"
+    },
+    "/importJobs/{importJobId}": {
+      "schema": { "$ref": "#/entities/ImportJob" },
+      "description": "Excel and CSV import job logs"
+    },
+    "/notificationPreferences/{prefId}": {
+      "schema": { "$ref": "#/entities/NotificationPreference" },
+      "description": "User workspace and allowlist preferences"
+    }
+  }
+}

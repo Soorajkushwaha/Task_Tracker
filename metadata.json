@@ -1,0 +1,6 @@
+{
+  "name": "WorkTrack",
+  "description": "Full-stack personal productivity and enterprise operations management platform for tasks, purchase orders, shipments, escalations, and time tracking.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

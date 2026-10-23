@@ -1,0 +1,529 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net: Default deny all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Hardened Global Helpers
+    function isSignedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email', 'displayName', 'role', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['uid', 'email', 'displayName', 'role', 'createdAt', 'updatedAt'])
+        && data.uid == request.auth.uid
+        && data.uid is string && data.uid.size() <= 128
+        && data.email is string && data.email.size() <= 254
+        && data.displayName is string && data.displayName.size() <= 120
+        && data.role in ['owner', 'admin', 'member']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidInvoiceTracking(data) {
+      return data.keys().hasAll(['ownerId', 'invoice_no', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly([
+          'ownerId', 'invoice_no', 'po_number', 'vendor_name', 'location',
+          'dispatched_date', 'appointment_date', 'po_expiry_date',
+          'invoice_quantity', 'grn_quantity', 'dn_quantity', 'no_of_box',
+          'invoice_amount', 'grn_amount', 'dn_amount',
+          'po_type', 'tracking_id', 'shipment_track_id', 'transport_mode',
+          'appointment_count', 'appointment_history',
+          'delivery_status', 'invoice_status',
+          'dn_status', 'dn_resolution', 'dn_closure_date',
+          'delivery_remark', 'invoice_remark', 'general_remark',
+          'assigned_person', 'grn_no',
+          'original_appointment_date', 'original_po_expiry_date', 'po_expiry_history',
+          'cn_no', 'cn_amount', 'cn_status',
+          'invoice_file_path', 'po_file_path', 'pod_file_path',
+          'grn_file_path', 'dn_file_path', 'cn_file_path',
+          'createdAt', 'updatedAt'
+        ])
+        && data.ownerId == request.auth.uid
+        && data.ownerId is string && data.ownerId.size() <= 128
+        && data.invoice_no is string && data.invoice_no.size() >= 1 && data.invoice_no.size() <= 64
+        && (!('po_number' in data) || (data.po_number is string && data.po_number.size() <= 64))
+        && (!('vendor_name' in data) || (data.vendor_name is string && data.vendor_name.size() <= 160))
+        && (!('location' in data) || (data.location is string && data.location.size() <= 160))
+        && (!('dispatched_date' in data) || (data.dispatched_date is string && data.dispatched_date.size() <= 32))
+        && (!('appointment_date' in data) || (data.appointment_date is string && data.appointment_date.size() <= 32))
+        && (!('po_expiry_date' in data) || (data.po_expiry_date is string && data.po_expiry_date.size() <= 32))
+        && (!('invoice_quantity' in data) || (data.invoice_quantity is number && data.invoice_quantity >= 0))
+        && (!('grn_quantity' in data) || (data.grn_quantity is number && data.grn_quantity >= 0))
+        && (!('dn_quantity' in data) || (data.dn_quantity is number && data.dn_quantity >= 0))
+        && (!('no_of_box' in data) || (data.no_of_box is number && data.no_of_box >= 0))
+        && (!('invoice_amount' in data) || (data.invoice_amount is number && data.invoice_amount >= 0))
+        && (!('grn_amount' in data) || (data.grn_amount is number && data.grn_amount >= 0))
+        && (!('dn_amount' in data) || (data.dn_amount is number && data.dn_amount >= 0))
+        && (!('po_type' in data) || (data.po_type is string && data.po_type.size() <= 64))
+        && (!('tracking_id' in data) || (data.tracking_id is string && data.tracking_id.size() <= 80))
+        && (!('shipment_track_id' in data) || (data.shipment_track_id is string && data.shipment_track_id.size() <= 80))
+        && (!('transport_mode' in data) || (data.transport_mode is string && data.transport_mode.size() <= 80))
+        && (!('appointment_count' in data) || (data.appointment_count is number && data.appointment_count >= 0))
+        && (!('appointment_history' in data) || (data.appointment_history is string && data.appointment_history.size() <= 3000))
+        && (!('delivery_status' in data) || (data.delivery_status is string && data.delivery_status.size() <= 40))
+        && (!('invoice_status' in data) || (data.invoice_status is string && data.invoice_status.size() <= 40))
+        && (!('dn_status' in data) || (data.dn_status is string && data.dn_status.size() <= 40))
+        && (!('dn_resolution' in data) || (data.dn_resolution is string && data.dn_resolution.size() <= 80))
+        && (!('dn_closure_date' in data) || (data.dn_closure_date is string && data.dn_closure_date.size() <= 32))
+        && (!('delivery_remark' in data) || (data.delivery_remark is string && data.delivery_remark.size() <= 2000))
+        && (!('invoice_remark' in data) || (data.invoice_remark is string && data.invoice_remark.size() <= 2000))
+        && (!('general_remark' in data) || (data.general_remark is string && data.general_remark.size() <= 3000))
+        && (!('assigned_person' in data) || (data.assigned_person is string && data.assigned_person.size() <= 120))
+        && (!('grn_no' in data) || (data.grn_no is string && data.grn_no.size() <= 64))
+        && (!('original_appointment_date' in data) || (data.original_appointment_date is string && data.original_appointment_date.size() <= 32))
+        && (!('original_po_expiry_date' in data) || (data.original_po_expiry_date is string && data.original_po_expiry_date.size() <= 32))
+        && (!('po_expiry_history' in data) || (data.po_expiry_history is string && data.po_expiry_history.size() <= 3000))
+        && (!('cn_no' in data) || (data.cn_no is string && data.cn_no.size() <= 64))
+        && (!('cn_amount' in data) || (data.cn_amount is number && data.cn_amount >= 0))
+        && (!('cn_status' in data) || (data.cn_status is string && data.cn_status.size() <= 40))
+        && (!('invoice_file_path' in data) || (data.invoice_file_path is string && data.invoice_file_path.size() <= 500))
+        && (!('po_file_path' in data) || (data.po_file_path is string && data.po_file_path.size() <= 500))
+        && (!('pod_file_path' in data) || (data.pod_file_path is string && data.pod_file_path.size() <= 500))
+        && (!('grn_file_path' in data) || (data.grn_file_path is string && data.grn_file_path.size() <= 500))
+        && (!('dn_file_path' in data) || (data.dn_file_path is string && data.dn_file_path.size() <= 500))
+        && (!('cn_file_path' in data) || (data.cn_file_path is string && data.cn_file_path.size() <= 500))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidTrackingDocument(data) {
+      return data.keys().hasAll(['ownerId', 'category', 'originalFilename', 'storagePath', 'uploadTimestamp', 'uploadedByEmail', 'sizeBytes', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly([
+          'ownerId', 'category', 'originalFilename', 'invoiceNo', 'poNumber',
+          'trackingId', 'uploadTimestamp', 'uploadedByEmail', 'storagePath',
+          'mimeType', 'sizeBytes', 'historyJson', 'createdAt', 'updatedAt'
+        ])
+        && data.ownerId == request.auth.uid
+        && data.ownerId is string && data.ownerId.size() <= 128
+        && data.category in ['Invoice', 'PO', 'POD', 'GRN', 'DN', 'CN']
+        && data.originalFilename is string && data.originalFilename.size() >= 1 && data.originalFilename.size() <= 255
+        && (!('invoiceNo' in data) || (data.invoiceNo is string && data.invoiceNo.size() <= 64))
+        && (!('poNumber' in data) || (data.poNumber is string && data.poNumber.size() <= 64))
+        && (!('trackingId' in data) || (data.trackingId is string && data.trackingId.size() <= 80))
+        && data.uploadTimestamp is string && data.uploadTimestamp.size() <= 40
+        && data.uploadedByEmail is string && data.uploadedByEmail.size() <= 254
+        && data.storagePath is string && data.storagePath.size() >= 1 && data.storagePath.size() <= 500
+        && (!('mimeType' in data) || (data.mimeType is string && data.mimeType.size() <= 120))
+        && data.sizeBytes is number && data.sizeBytes >= 0 && data.sizeBytes <= 10485760
+        && (!('historyJson' in data) || (data.historyJson is string && data.historyJson.size() <= 4000))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidTask(data) {
+      return data.keys().hasAll(['ownerId', 'taskCode', 'title', 'category', 'priority', 'status', 'createdDate', 'dueDate', 'estimatedHours', 'actualHours', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['ownerId', 'taskCode', 'title', 'description', 'category', 'priority', 'status', 'createdDate', 'startDate', 'dueDate', 'completedDate', 'assignedBy', 'assignedTo', 'estimatedHours', 'actualHours', 'tags', 'notes', 'subtasksJson', 'commentsJson', 'projectId', 'createdAt', 'updatedAt'])
+        && data.ownerId == request.auth.uid
+        && data.ownerId is string && data.ownerId.size() <= 128
+        && data.taskCode is string && data.taskCode.size() <= 32
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 200
+        && (!('description' in data) || (data.description is string && data.description.size() <= 2000))
+        && data.category in ['Office Work', 'Operations', 'Data Analytics', 'Coding', 'Video Creation', 'Stock Market Research', 'Personal', 'Other']
+        && data.priority in ['Critical', 'High', 'Medium', 'Low']
+        && data.status in ['Not Started', 'In Progress', 'Waiting', 'Blocked', 'Completed', 'Cancelled']
+        && data.createdDate is string && data.createdDate.size() <= 32
+        && (!('startDate' in data) || (data.startDate is string && data.startDate.size() <= 32))
+        && data.dueDate is string && data.dueDate.size() <= 32
+        && (!('completedDate' in data) || (data.completedDate is string && data.completedDate.size() <= 32))
+        && (!('assignedBy' in data) || (data.assignedBy is string && data.assignedBy.size() <= 120))
+        && (!('assignedTo' in data) || (data.assignedTo is string && data.assignedTo.size() <= 120))
+        && data.estimatedHours is number && data.estimatedHours >= 0
+        && data.actualHours is number && data.actualHours >= 0
+        && (!('tags' in data) || (data.tags is list && data.tags.size() <= 10 && (data.tags.size() == 0 || (data.tags[0] is string && data.tags[0].size() <= 50))))
+        && (!('notes' in data) || (data.notes is string && data.notes.size() <= 2000))
+        && (!('subtasksJson' in data) || (data.subtasksJson is string && data.subtasksJson.size() <= 4000))
+        && (!('commentsJson' in data) || (data.commentsJson is string && data.commentsJson.size() <= 4000))
+        && (!('projectId' in data) || (data.projectId is string && data.projectId.size() <= 128))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidOperation(data) {
+      return data.keys().hasAll(['ownerId', 'recordCode', 'poNumber', 'courierName', 'warehouse', 'quantity', 'shipmentStatus', 'poExpiryDate', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['ownerId', 'recordCode', 'poNumber', 'invoiceNumber', 'lrNumber', 'courierName', 'vehicleNumber', 'driverName', 'driverContact', 'sku', 'productName', 'quantity', 'warehouse', 'dispatchDate', 'reportingDate', 'appointmentDate', 'poCreationDate', 'poExpiryDate', 'deliveryDate', 'shipmentStatus', 'appointmentStatus', 'issueCategory', 'issueDescription', 'nextFollowUpDate', 'lastUpdatedDate', 'remarks', 'rescheduleHistoryJson', 'createdAt', 'updatedAt'])
+        && data.ownerId == request.auth.uid
+        && data.ownerId is string && data.ownerId.size() <= 128
+        && data.recordCode is string && data.recordCode.size() <= 32
+        && data.poNumber is string && data.poNumber.size() >= 1 && data.poNumber.size() <= 64
+        && (!('invoiceNumber' in data) || (data.invoiceNumber is string && data.invoiceNumber.size() <= 64))
+        && (!('lrNumber' in data) || (data.lrNumber is string && data.lrNumber.size() <= 64))
+        && data.courierName is string && data.courierName.size() <= 120
+        && (!('vehicleNumber' in data) || (data.vehicleNumber is string && data.vehicleNumber.size() <= 40))
+        && (!('driverName' in data) || (data.driverName is string && data.driverName.size() <= 100))
+        && (!('driverContact' in data) || (data.driverContact is string && data.driverContact.size() <= 40))
+        && (!('sku' in data) || (data.sku is string && data.sku.size() <= 80))
+        && (!('productName' in data) || (data.productName is string && data.productName.size() <= 200))
+        && data.quantity is number && data.quantity >= 0
+        && data.warehouse is string && data.warehouse.size() <= 120
+        && (!('dispatchDate' in data) || (data.dispatchDate is string && data.dispatchDate.size() <= 32))
+        && (!('reportingDate' in data) || (data.reportingDate is string && data.reportingDate.size() <= 32))
+        && (!('appointmentDate' in data) || (data.appointmentDate is string && data.appointmentDate.size() <= 32))
+        && (!('poCreationDate' in data) || (data.poCreationDate is string && data.poCreationDate.size() <= 32))
+        && data.poExpiryDate is string && data.poExpiryDate.size() <= 32
+        && (!('deliveryDate' in data) || (data.deliveryDate is string && data.deliveryDate.size() <= 32))
+        && data.shipmentStatus in ['Planned', 'Dispatched', 'In Transit', 'At Last-Mile Hub', 'Appointment Pending', 'Appointment Scheduled', 'Vehicle Reported', 'Unloaded', 'Delivered', 'Partially Delivered', 'On Hold', 'Returned', 'Expired', 'Cancelled']
+        && (!('appointmentStatus' in data) || (data.appointmentStatus is string && data.appointmentStatus.size() <= 60))
+        && (!('issueCategory' in data) || (data.issueCategory is string && data.issueCategory.size() <= 80))
+        && (!('issueDescription' in data) || (data.issueDescription is string && data.issueDescription.size() <= 1000))
+        && (!('nextFollowUpDate' in data) || (data.nextFollowUpDate is string && data.nextFollowUpDate.size() <= 32))
+        && (!('lastUpdatedDate' in data) || (data.lastUpdatedDate is string && data.lastUpdatedDate.size() <= 32))
+        && (!('remarks' in data) || (data.remarks is string && data.remarks.size() <= 2000))
+        && (!('rescheduleHistoryJson' in data) || (data.rescheduleHistoryJson is string && data.rescheduleHistoryJson.size() <= 5000))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidPurchaseOrder(data) {
+      return data.keys().hasAll(['ownerId', 'poNumber', 'vendor', 'warehouse', 'currentExpiryDate', 'poStatus', 'expectedQuantity', 'receivedQuantity', 'pendingQuantity', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['ownerId', 'poNumber', 'vendor', 'courier', 'warehouse', 'poCreationDate', 'originalAppointmentDate', 'currentAppointmentDate', 'originalExpiryDate', 'currentExpiryDate', 'poStatus', 'expectedQuantity', 'receivedQuantity', 'pendingQuantity', 'relatedInvoices', 'relatedLRs', 'notes', 'changeHistoryJson', 'createdAt', 'updatedAt'])
+        && data.ownerId == request.auth.uid
+        && data.ownerId is string && data.ownerId.size() <= 128
+        && data.poNumber is string && data.poNumber.size() >= 1 && data.poNumber.size() <= 64
+        && data.vendor is string && data.vendor.size() <= 120
+        && (!('courier' in data) || (data.courier is string && data.courier.size() <= 120))
+        && data.warehouse is string && data.warehouse.size() <= 120
+        && (!('poCreationDate' in data) || (data.poCreationDate is string && data.poCreationDate.size() <= 32))
+        && (!('originalAppointmentDate' in data) || (data.originalAppointmentDate is string && data.originalAppointmentDate.size() <= 32))
+        && (!('currentAppointmentDate' in data) || (data.currentAppointmentDate is string && data.currentAppointmentDate.size() <= 32))
+        && (!('originalExpiryDate' in data) || (data.originalExpiryDate is string && data.originalExpiryDate.size() <= 32))
+        && data.currentExpiryDate is string && data.currentExpiryDate.size() <= 32
+        && data.poStatus in ['Open', 'Appointment Scheduled', 'In Transit', 'Partially Received', 'GRN Completed', 'Expired', 'Cancelled']
+        && data.expectedQuantity is number && data.expectedQuantity >= 0
+        && data.receivedQuantity is number && data.receivedQuantity >= 0
+        && data.pendingQuantity is number && data.pendingQuantity >= 0
+        && (!('relatedInvoices' in data) || (data.relatedInvoices is string && data.relatedInvoices.size() <= 500))
+        && (!('relatedLRs' in data) || (data.relatedLRs is string && data.relatedLRs.size() <= 500))
+        && (!('notes' in data) || (data.notes is string && data.notes.size() <= 2000))
+        && (!('changeHistoryJson' in data) || (data.changeHistoryJson is string && data.changeHistoryJson.size() <= 5000))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidEscalation(data) {
+      return data.keys().hasAll(['ownerId', 'escalationCode', 'escalationType', 'issueDescription', 'createdDate', 'priority', 'status', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['ownerId', 'escalationCode', 'relatedPoNumber', 'relatedLrNumber', 'courierName', 'warehouse', 'escalationType', 'issueDescription', 'responsibleTeam', 'assignedPerson', 'createdDate', 'priority', 'status', 'lastFollowUpDate', 'nextFollowUpDate', 'resolutionNotes', 'closureDate', 'historyJson', 'createdAt', 'updatedAt'])
+        && data.ownerId == request.auth.uid
+        && data.ownerId is string && data.ownerId.size() <= 128
+        && data.escalationCode is string && data.escalationCode.size() <= 32
+        && (!('relatedPoNumber' in data) || (data.relatedPoNumber is string && data.relatedPoNumber.size() <= 64))
+        && (!('relatedLrNumber' in data) || (data.relatedLrNumber is string && data.relatedLrNumber.size() <= 64))
+        && (!('courierName' in data) || (data.courierName is string && data.courierName.size() <= 120))
+        && (!('warehouse' in data) || (data.warehouse is string && data.warehouse.size() <= 120))
+        && data.escalationType in ['GRN Pending', 'DN Issue', 'RTV Pickup', 'Shipment Rejection', 'Capacity Issue', 'Appointment Issue', 'PO Expiry', 'Invoice Issue', 'Courier Delay', 'Other']
+        && data.issueDescription is string && data.issueDescription.size() >= 1 && data.issueDescription.size() <= 2000
+        && (!('responsibleTeam' in data) || (data.responsibleTeam is string && data.responsibleTeam.size() <= 120))
+        && (!('assignedPerson' in data) || (data.assignedPerson is string && data.assignedPerson.size() <= 120))
+        && data.createdDate is string && data.createdDate.size() <= 32
+        && data.priority in ['Critical', 'High', 'Medium', 'Low']
+        && data.status in ['Open', 'In Progress', 'Awaiting Warehouse', 'Awaiting Vendor', 'Resolved', 'Closed', 'Reopened']
+        && (!('lastFollowUpDate' in data) || (data.lastFollowUpDate is string && data.lastFollowUpDate.size() <= 32))
+        && (!('nextFollowUpDate' in data) || (data.nextFollowUpDate is string && data.nextFollowUpDate.size() <= 32))
+        && (!('resolutionNotes' in data) || (data.resolutionNotes is string && data.resolutionNotes.size() <= 2000))
+        && (!('closureDate' in data) || (data.closureDate is string && data.closureDate.size() <= 32))
+        && (!('historyJson' in data) || (data.historyJson is string && data.historyJson.size() <= 5000))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidAssignment(data) {
+      return data.keys().hasAll(['ownerId', 'assignmentCode', 'title', 'assignedBy', 'assignedDate', 'dueDate', 'priority', 'status', 'progress', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['ownerId', 'assignmentCode', 'title', 'assignedBy', 'assignedDate', 'dueDate', 'priority', 'description', 'status', 'progress', 'comments', 'completionDate', 'linkedTaskId', 'createdAt', 'updatedAt'])
+        && data.ownerId == request.auth.uid
+        && data.ownerId is string && data.ownerId.size() <= 128
+        && data.assignmentCode is string && data.assignmentCode.size() <= 32
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 200
+        && data.assignedBy is string && data.assignedBy.size() <= 120
+        && data.assignedDate is string && data.assignedDate.size() <= 32
+        && data.dueDate is string && data.dueDate.size() <= 32
+        && data.priority in ['Critical', 'High', 'Medium', 'Low']
+        && (!('description' in data) || (data.description is string && data.description.size() <= 2000))
+        && data.status in ['Pending', 'In Progress', 'In Review', 'Completed', 'On Hold']
+        && data.progress is number && data.progress >= 0 && data.progress <= 100
+        && (!('comments' in data) || (data.comments is string && data.comments is string && data.comments.size() <= 2000))
+        && (!('completionDate' in data) || (data.completionDate is string && data.completionDate.size() <= 32))
+        && (!('linkedTaskId' in data) || (data.linkedTaskId is string && data.linkedTaskId.size() <= 128))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidProject(data) {
+      return data.keys().hasAll(['ownerId', 'projectCode', 'name', 'category', 'startDate', 'targetDate', 'status', 'priority', 'progress', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['ownerId', 'projectCode', 'name', 'description', 'category', 'startDate', 'targetDate', 'status', 'priority', 'progress', 'milestonesJson', 'notes', 'createdAt', 'updatedAt'])
+        && data.ownerId == request.auth.uid
+        && data.ownerId is string && data.ownerId.size() <= 128
+        && data.projectCode is string && data.projectCode.size() <= 32
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 200
+        && (!('description' in data) || (data.description is string && data.description.size() <= 2000))
+        && data.category in ['Coding Projects', 'Data Analytics', 'Video Creation', 'Content Creation', 'Stock Market Research', 'Personal Goals', 'Other Projects']
+        && data.startDate is string && data.startDate.size() <= 32
+        && data.targetDate is string && data.targetDate.size() <= 32
+        && data.status in ['Planning', 'Active', 'On Hold', 'Completed', 'Archived']
+        && data.priority in ['Critical', 'High', 'Medium', 'Low']
+        && data.progress is number && data.progress >= 0 && data.progress <= 100
+        && (!('milestonesJson' in data) || (data.milestonesJson is string && data.milestonesJson.size() <= 4000))
+        && (!('notes' in data) || (data.notes is string && data.notes.size() <= 2000))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidTimeLog(data) {
+      return data.keys().hasAll(['ownerId', 'startTime', 'endTime', 'durationMinutes', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['ownerId', 'taskId', 'taskTitle', 'projectId', 'projectName', 'startTime', 'endTime', 'durationMinutes', 'notes', 'createdAt', 'updatedAt'])
+        && data.ownerId == request.auth.uid
+        && data.ownerId is string && data.ownerId.size() <= 128
+        && (!('taskId' in data) || (data.taskId is string && data.taskId.size() <= 128))
+        && (!('taskTitle' in data) || (data.taskTitle is string && data.taskTitle.size() <= 200))
+        && (!('projectId' in data) || (data.projectId is string && data.projectId.size() <= 128))
+        && (!('projectName' in data) || (data.projectName is string && data.projectName.size() <= 200))
+        && data.startTime is string && data.startTime.size() <= 40
+        && data.endTime is string && data.endTime.size() <= 40
+        && data.durationMinutes is number && data.durationMinutes >= 0
+        && (!('notes' in data) || (data.notes is string && data.notes.size() <= 1000))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidActivityLog(data) {
+      return data.keys().hasAll(['ownerId', 'recordType', 'recordId', 'action', 'timestampIso', 'createdAt'])
+        && data.keys().hasOnly(['ownerId', 'recordType', 'recordId', 'action', 'previousValue', 'newValue', 'userEmail', 'timestampIso', 'createdAt'])
+        && data.ownerId == request.auth.uid
+        && data.ownerId is string && data.ownerId.size() <= 128
+        && data.recordType is string && data.recordType.size() <= 64
+        && data.recordId is string && data.recordId.size() <= 128
+        && data.action is string && data.action.size() <= 120
+        && (!('previousValue' in data) || (data.previousValue is string && data.previousValue.size() <= 1000))
+        && (!('newValue' in data) || (data.newValue is string && data.newValue.size() <= 1000))
+        && (!('userEmail' in data) || (data.userEmail is string && data.userEmail.size() <= 254))
+        && data.timestampIso is string && data.timestampIso.size() <= 40
+        && data.createdAt is timestamp;
+    }
+
+    function isValidImportJob(data) {
+      return data.keys().hasAll(['ownerId', 'fileName', 'targetModule', 'totalRows', 'importedRows', 'invalidRows', 'duplicateRows', 'timestampIso', 'createdAt'])
+        && data.keys().hasOnly(['ownerId', 'fileName', 'targetModule', 'totalRows', 'importedRows', 'invalidRows', 'duplicateRows', 'timestampIso', 'createdAt'])
+        && data.ownerId == request.auth.uid
+        && data.ownerId is string && data.ownerId.size() <= 128
+        && data.fileName is string && data.fileName.size() <= 200
+        && data.targetModule in ['tasks', 'operations', 'purchaseOrders', 'escalations', 'invoiceTracking']
+        && data.totalRows is number && data.totalRows >= 0
+        && data.importedRows is number && data.importedRows >= 0
+        && data.invalidRows is number && data.invalidRows >= 0
+        && data.duplicateRows is number && data.duplicateRows >= 0
+        && data.timestampIso is string && data.timestampIso.size() <= 40
+        && data.createdAt is timestamp;
+    }
+
+    function isValidNotificationPreference(data) {
+      return data.keys().hasAll(['ownerId', 'allowedEmails', 'poExpiryWarnDays', 'taskDueReminderHours', 'theme', 'updatedAt'])
+        && data.keys().hasOnly(['ownerId', 'allowedEmails', 'poExpiryWarnDays', 'taskDueReminderHours', 'theme', 'updatedAt'])
+        && data.ownerId == request.auth.uid
+        && data.ownerId is string && data.ownerId.size() <= 128
+        && data.allowedEmails is list && data.allowedEmails.size() >= 1 && data.allowedEmails.size() <= 20 && data.allowedEmails[0] is string && data.allowedEmails[0].size() <= 254
+        && data.poExpiryWarnDays is number && data.poExpiryWarnDays >= 1 && data.poExpiryWarnDays <= 60
+        && data.taskDueReminderHours is number && data.taskDueReminderHours >= 1 && data.taskDueReminderHours <= 168
+        && data.theme in ['light', 'dark']
+        && data.updatedAt is timestamp;
+    }
+
+    // Connection test path (read-only for authenticated users)
+    match /test/{docId} {
+      allow get: if isSignedIn() && isValidId(docId);
+      allow list, create, update, delete: if false;
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if false;
+      allow create: if isOwner(userId) && isValidId(userId) && isValidUser(incoming()) && incoming().createdAt == request.time && incoming().updatedAt == request.time;
+      allow update: if isOwner(userId) && isValidId(userId) && isValidUser(incoming())
+        && incoming().uid == existing().uid
+        && incoming().role == existing().role
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'email', 'updatedAt']);
+      allow delete: if false;
+    }
+
+    match /invoiceTracking/{recordId} {
+      allow get: if isSignedIn() && isValidId(recordId) && existing().ownerId == request.auth.uid;
+      allow list: if isSignedIn() && existing().ownerId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(recordId) && isValidInvoiceTracking(incoming()) && incoming().createdAt == request.time && incoming().updatedAt == request.time;
+      allow update: if isSignedIn() && isValidId(recordId) && isValidInvoiceTracking(incoming())
+        && existing().ownerId == request.auth.uid
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'invoice_no', 'po_number', 'vendor_name', 'location',
+          'dispatched_date', 'appointment_date', 'po_expiry_date',
+          'invoice_quantity', 'grn_quantity', 'dn_quantity', 'no_of_box',
+          'invoice_amount', 'grn_amount', 'dn_amount',
+          'po_type', 'tracking_id', 'shipment_track_id', 'transport_mode',
+          'appointment_count', 'appointment_history',
+          'delivery_status', 'invoice_status',
+          'dn_status', 'dn_resolution', 'dn_closure_date',
+          'delivery_remark', 'invoice_remark', 'general_remark',
+          'assigned_person', 'grn_no',
+          'original_appointment_date', 'original_po_expiry_date', 'po_expiry_history',
+          'cn_no', 'cn_amount', 'cn_status',
+          'invoice_file_path', 'po_file_path', 'pod_file_path',
+          'grn_file_path', 'dn_file_path', 'cn_file_path',
+          'updatedAt'
+        ]);
+      allow delete: if isSignedIn() && isValidId(recordId) && existing().ownerId == request.auth.uid;
+    }
+
+    match /trackingDocuments/{docId} {
+      allow get: if isSignedIn() && isValidId(docId) && existing().ownerId == request.auth.uid;
+      allow list: if isSignedIn() && existing().ownerId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(docId) && isValidTrackingDocument(incoming()) && incoming().createdAt == request.time && incoming().updatedAt == request.time;
+      allow update: if isSignedIn() && isValidId(docId) && isValidTrackingDocument(incoming())
+        && existing().ownerId == request.auth.uid
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'category', 'originalFilename', 'invoiceNo', 'poNumber',
+          'trackingId', 'uploadTimestamp', 'uploadedByEmail', 'storagePath',
+          'mimeType', 'sizeBytes', 'historyJson', 'updatedAt'
+        ]);
+      allow delete: if isSignedIn() && isValidId(docId) && existing().ownerId == request.auth.uid;
+    }
+
+    match /tasks/{taskId} {
+      allow get: if isSignedIn() && isValidId(taskId) && existing().ownerId == request.auth.uid;
+      allow list: if isSignedIn() && existing().ownerId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(taskId) && isValidTask(incoming()) && incoming().createdAt == request.time && incoming().updatedAt == request.time;
+      allow update: if isSignedIn() && isValidId(taskId) && isValidTask(incoming())
+        && existing().ownerId == request.auth.uid
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['taskCode', 'title', 'description', 'category', 'priority', 'status', 'startDate', 'dueDate', 'completedDate', 'assignedBy', 'assignedTo', 'estimatedHours', 'actualHours', 'tags', 'notes', 'subtasksJson', 'commentsJson', 'projectId', 'updatedAt']);
+      allow delete: if isSignedIn() && isValidId(taskId) && existing().ownerId == request.auth.uid;
+    }
+
+    match /operations/{operationId} {
+      allow get: if isSignedIn() && isValidId(operationId) && existing().ownerId == request.auth.uid;
+      allow list: if isSignedIn() && existing().ownerId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(operationId) && isValidOperation(incoming()) && incoming().createdAt == request.time && incoming().updatedAt == request.time;
+      allow update: if isSignedIn() && isValidId(operationId) && isValidOperation(incoming())
+        && existing().ownerId == request.auth.uid
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['recordCode', 'poNumber', 'invoiceNumber', 'lrNumber', 'courierName', 'vehicleNumber', 'driverName', 'driverContact', 'sku', 'productName', 'quantity', 'warehouse', 'dispatchDate', 'reportingDate', 'appointmentDate', 'poCreationDate', 'poExpiryDate', 'deliveryDate', 'shipmentStatus', 'appointmentStatus', 'issueCategory', 'issueDescription', 'nextFollowUpDate', 'lastUpdatedDate', 'remarks', 'rescheduleHistoryJson', 'updatedAt']);
+      allow delete: if isSignedIn() && isValidId(operationId) && existing().ownerId == request.auth.uid;
+    }
+
+    match /purchaseOrders/{poId} {
+      allow get: if isSignedIn() && isValidId(poId) && existing().ownerId == request.auth.uid;
+      allow list: if isSignedIn() && existing().ownerId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(poId) && isValidPurchaseOrder(incoming()) && incoming().createdAt == request.time && incoming().updatedAt == request.time;
+      allow update: if isSignedIn() && isValidId(poId) && isValidPurchaseOrder(incoming())
+        && existing().ownerId == request.auth.uid
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['poNumber', 'vendor', 'courier', 'warehouse', 'poCreationDate', 'originalAppointmentDate', 'currentAppointmentDate', 'originalExpiryDate', 'currentExpiryDate', 'poStatus', 'expectedQuantity', 'receivedQuantity', 'pendingQuantity', 'relatedInvoices', 'relatedLRs', 'notes', 'changeHistoryJson', 'updatedAt']);
+      allow delete: if isSignedIn() && isValidId(poId) && existing().ownerId == request.auth.uid;
+    }
+
+    match /escalations/{escalationId} {
+      allow get: if isSignedIn() && isValidId(escalationId) && existing().ownerId == request.auth.uid;
+      allow list: if isSignedIn() && existing().ownerId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(escalationId) && isValidEscalation(incoming()) && incoming().createdAt == request.time && incoming().updatedAt == request.time;
+      allow update: if isSignedIn() && isValidId(escalationId) && isValidEscalation(incoming())
+        && existing().ownerId == request.auth.uid
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['escalationCode', 'relatedPoNumber', 'relatedLrNumber', 'courierName', 'warehouse', 'escalationType', 'issueDescription', 'responsibleTeam', 'assignedPerson', 'priority', 'status', 'lastFollowUpDate', 'nextFollowUpDate', 'resolutionNotes', 'closureDate', 'historyJson', 'updatedAt']);
+      allow delete: if isSignedIn() && isValidId(escalationId) && existing().ownerId == request.auth.uid;
+    }
+
+    match /assignments/{assignmentId} {
+      allow get: if isSignedIn() && isValidId(assignmentId) && existing().ownerId == request.auth.uid;
+      allow list: if isSignedIn() && existing().ownerId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(assignmentId) && isValidAssignment(incoming()) && incoming().createdAt == request.time && incoming().updatedAt == request.time;
+      allow update: if isSignedIn() && isValidId(assignmentId) && isValidAssignment(incoming())
+        && existing().ownerId == request.auth.uid
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['assignmentCode', 'title', 'assignedBy', 'assignedDate', 'dueDate', 'priority', 'description', 'status', 'progress', 'comments', 'completionDate', 'linkedTaskId', 'updatedAt']);
+      allow delete: if isSignedIn() && isValidId(assignmentId) && existing().ownerId == request.auth.uid;
+    }
+
+    match /projects/{projectId} {
+      allow get: if isSignedIn() && isValidId(projectId) && existing().ownerId == request.auth.uid;
+      allow list: if isSignedIn() && existing().ownerId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(projectId) && isValidProject(incoming()) && incoming().createdAt == request.time && incoming().updatedAt == request.time;
+      allow update: if isSignedIn() && isValidId(projectId) && isValidProject(incoming())
+        && existing().ownerId == request.auth.uid
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['projectCode', 'name', 'description', 'category', 'startDate', 'targetDate', 'status', 'priority', 'progress', 'milestonesJson', 'notes', 'updatedAt']);
+      allow delete: if isSignedIn() && isValidId(projectId) && existing().ownerId == request.auth.uid;
+    }
+
+    match /timeLogs/{timeLogId} {
+      allow get: if isSignedIn() && isValidId(timeLogId) && existing().ownerId == request.auth.uid;
+      allow list: if isSignedIn() && existing().ownerId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(timeLogId) && isValidTimeLog(incoming()) && incoming().createdAt == request.time && incoming().updatedAt == request.time;
+      allow update: if isSignedIn() && isValidId(timeLogId) && isValidTimeLog(incoming())
+        && existing().ownerId == request.auth.uid
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['taskId', 'taskTitle', 'projectId', 'projectName', 'startTime', 'endTime', 'durationMinutes', 'notes', 'updatedAt']);
+      allow delete: if isSignedIn() && isValidId(timeLogId) && existing().ownerId == request.auth.uid;
+    }
+
+    match /activityLogs/{activityLogId} {
+      allow get: if isSignedIn() && isValidId(activityLogId) && existing().ownerId == request.auth.uid;
+      allow list: if isSignedIn() && existing().ownerId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(activityLogId) && isValidActivityLog(incoming()) && incoming().createdAt == request.time;
+      allow update, delete: if false;
+    }
+
+    match /importJobs/{importJobId} {
+      allow get: if isSignedIn() && isValidId(importJobId) && existing().ownerId == request.auth.uid;
+      allow list: if isSignedIn() && existing().ownerId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(importJobId) && isValidImportJob(incoming()) && incoming().createdAt == request.time;
+      allow update, delete: if false;
+    }
+
+    match /notificationPreferences/{prefId} {
+      allow get: if isOwner(prefId) && isValidId(prefId);
+      allow list: if false;
+      allow create: if isOwner(prefId) && isValidId(prefId) && isValidNotificationPreference(incoming()) && incoming().updatedAt == request.time;
+      allow update: if isOwner(prefId) && isValidId(prefId) && isValidNotificationPreference(incoming())
+        && incoming().ownerId == existing().ownerId
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['allowedEmails', 'poExpiryWarnDays', 'taskDueReminderHours', 'theme', 'updatedAt']);
+      allow delete: if false;
+    }
+  }
+}
